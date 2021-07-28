@@ -114,15 +114,15 @@ class Generator(nn.Module):
 
         self.mlp = nn.Linear(1024, (self.initial_size ** 2) * self.dim)
 
-        self.positional_embedding_1 = nn.Parameter(torch.zeros(1, (8**2), 384))
-        self.positional_embedding_2 = nn.Parameter(torch.zeros(1, (8*2)**2, 384//4))
-        self.positional_embedding_3 = nn.Parameter(torch.zeros(1, (8*4)**2, 384//16))
+        self.positional_embedding_1 = nn.Parameter(torch.zeros(1, (self.initial_size**2), self.dim))
+        self.positional_embedding_2 = nn.Parameter(torch.zeros(1, (self.initial_size*2)**2, self.dim//4))
+        self.positional_embedding_3 = nn.Parameter(torch.zeros(1, (self.initial_size*4)**2, self.dim//16))
 
-        self.TransformerEncoder_encoder1 = TransformerEncoder(depth=self.depth1, dim=self.dim,heads=self.heads, mlp_ratio=self.mlp_ratio, drop_rate=self.droprate_rate)
+        self.TransformerEncoder_encoder1 = TransformerEncoder(depth=self.depth1, dim=self.dim, heads=self.heads, mlp_ratio=self.mlp_ratio, drop_rate=self.droprate_rate)
         self.TransformerEncoder_encoder2 = TransformerEncoder(depth=self.depth2, dim=self.dim//4, heads=self.heads, mlp_ratio=self.mlp_ratio, drop_rate=self.droprate_rate)
         self.TransformerEncoder_encoder3 = TransformerEncoder(depth=self.depth3, dim=self.dim//16, heads=self.heads, mlp_ratio=self.mlp_ratio, drop_rate=self.droprate_rate)
 
-
+        self.sigmoid = nn.Sigmoid()
         self.linear = nn.Sequential(nn.Conv2d(self.dim//16, 3, 1, 1, 0))
 
     def forward(self, noise):
@@ -193,4 +193,5 @@ class Discriminator(nn.Module):
         x = self.TransfomerEncoder(x)
         x = self.norm(x)
         x = self.out(x[:, 0])
+        # x = self.sigmoid(x)
         return x

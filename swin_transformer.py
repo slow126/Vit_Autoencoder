@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
-
+from models import *
 
 class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
@@ -448,6 +448,8 @@ class PatchEmbed(nn.Module):
         return flops
 
 
+
+
 class SwinTransformer(nn.Module):
     r""" Swin Transformer
         A PyTorch impl of : `Swin Transformer: Hierarchical Vision Transformer using Shifted Windows`  -
@@ -529,7 +531,11 @@ class SwinTransformer(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool1d(1)
         self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
 
+        self.end_norm = norm_layer(num_classes)
+
         self.apply(self._init_weights)
+        self.decoder = Generator(depth1=1, depth2=1, depth3=1, initial_size=64, dim=128, heads=3, mlp_ratio=4,
+                          drop_rate=0.5).cuda()  # ,device = device)
 
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
@@ -565,6 +571,8 @@ class SwinTransformer(nn.Module):
     def forward(self, x):
         x = self.forward_features(x)
         x = self.head(x)
+        x = self.end_norm(x)
+        x = self.decoder.forward(x)
         return x
 
     def flops(self):
